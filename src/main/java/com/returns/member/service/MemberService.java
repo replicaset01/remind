@@ -8,8 +8,8 @@ import java.util.List;
 @Service
 public class MemberService {
     public Member createMember(Member member) {
-        Member createMember = member;
-        return createMember;
+        Member createdMember = member;
+        return createdMember;
     }
 
     public Member updateMember(Member member) {
