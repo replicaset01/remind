@@ -2,6 +2,7 @@ package com.returns.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
@@ -38,6 +39,15 @@ public class ErrorResponse {
         return new ErrorResponse(null, ConstraintViolationError.of(violations));
     }
 
+    public static ErrorResponse of(ExceptionCode exceptionCode) {
+        return new ErrorResponse(exceptionCode.getStatus(),
+                exceptionCode.getMessage());
+    }
+
+    public static ErrorResponse of(HttpStatus httpStatus) {
+        return new ErrorResponse(httpStatus.value(), httpStatus.getReasonPhrase());
+    }
+
     @Getter
     public static class FieldError {
         private String field;
@@ -64,7 +74,26 @@ public class ErrorResponse {
     }
 
     @Getter
-    public static class ConstraintViolationError
+    public static class ConstraintViolationError {
+        private String propertyPath;
+        private Object rejectedValue;
+        private String reason;
+
+        private ConstraintViolationError(String propertyPath, Object rejectedValue, String reason) {
+            this.propertyPath = propertyPath;
+            this.rejectedValue = rejectedValue;
+            this.reason = reason;
+        }
+
+        private static List<ConstraintViolationError> of(Set<ConstraintViolation<?>> constraintViolations) {
+            return constraintViolations.stream()
+                    .map(constraintViolation -> new ConstraintViolationError(
+                            constraintViolation.getPropertyPath().toString(),
+                            constraintViolation.getInvalidValue().toString(),
+                            constraintViolation.getMessage()))
+                    .collect(Collectors.toList());
+        }
+    }
 
 
 
