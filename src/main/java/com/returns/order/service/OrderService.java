@@ -9,11 +9,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class OrderService {
     private final MemberService memberService;
     private final OrderRepository orderRepository;
@@ -26,7 +28,8 @@ public class OrderService {
     public Order createOrder(Order order) {
         //i 회원이 존재 하는지 확인
         memberService.findVerifiedMember(order.getMember().getMemberId());
-        return orderRepository.save(order);
+//        return orderRepository.save(order);
+        throw new RuntimeException("RollBack Test");
     }
 
     public Order updateOrder(Order order) {

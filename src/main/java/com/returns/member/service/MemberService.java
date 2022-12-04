@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Optional;
  */
 
 @Service
+@Transactional
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -37,6 +40,7 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public Member updateMemberV1(Member member) {
         Member findMember = findVerifiedMember(member.getMemberId());
 
@@ -54,14 +58,14 @@ public class MemberService {
         return memberRepository.save(findMember);
     }
 
-    public Member updateMemberV2(Member member) {
-        Member findMember = findVerifiedMember(member.getMemberId());
+//    public Member updateMemberV2(Member member) {
+//        Member findMember = findVerifiedMember(member.getMemberId());
+//
+//        Member updatingMember = beanUtils.copyNonNullProperties(member, findMember);
+//        return memberRepository.save(updatingMember);
+//    }
 
-        Member updatingMember = beanUtils.copyNonNullProperties(member, findMember);
-        return memberRepository.save(updatingMember);
-    }
-
-
+    @Transactional(readOnly = true)
     public Member findMember(long memberId) {
         return findVerifiedMember(memberId);
     }
