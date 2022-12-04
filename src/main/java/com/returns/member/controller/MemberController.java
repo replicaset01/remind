@@ -1,28 +1,38 @@
 package com.returns.member.controller;
 
+import com.returns.member.dto.MemberDto;
 import com.returns.member.dto.MemberPatchDto;
 import com.returns.member.dto.MemberPostDto;
 import com.returns.member.dto.MemberResponseDto;
 import com.returns.member.entity.Member;
 import com.returns.member.mapper.MemberMapper;
 import com.returns.member.service.MemberService;
+import com.returns.response.MultiResponseDto;
+import com.returns.response.SingleResponseDto;
+import com.returns.stamp.Stamp;
+import com.returns.utils.UriCreator;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping("/v1/members")
+@RequestMapping("/v11/members")
 @Validated
 public class MemberController {
 
-    private MemberService memberService;
-    private MemberMapper mapper;
+    private final static String MEMBER_DEFAULT_URL = "/v10/members";
+
+    private final MemberService memberService;
+    private final MemberMapper mapper;
 
 
     public MemberController(MemberService memberService, MemberMapper mapper) {
@@ -30,49 +40,57 @@ public class MemberController {
         this.mapper = mapper;
     }
 
+//    @PostMapping
+//    public ResponseEntity postMember(@Valid @RequestBody MemberPostDto memberDto) {
+//
+//        Member member = memberService.createMember(mapper.memberPostDtoToMember(memberDto));
+//        URI location = UriCreator.createUri(MEMBER_DEFAULT_URL, member.getMemberId());
+//        return ResponseEntity.created(location).build();
+//    }
+
     @PostMapping
-    public ResponseEntity postMember(@Valid @RequestBody MemberPostDto memberDto) {
+    public ResponseEntity postMember(@Valid @RequestBody MemberDto.Post requestBody) {
+        Member member = mapper.memberPostDtoToMember(requestBody);
+        member.setStamp(new Stamp()); // homework solution 추가
 
-        Member member = mapper.memberPostDtoToMember(memberDto);
+        Member createdMember = memberService.createMember(member);
 
-        Member response = memberService.createMember(member);
-
-        return new ResponseEntity<>(mapper.memberToMemberResponseDto(response), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(mapper.memberToMemberResponseDto(createdMember)),
+                HttpStatus.CREATED);
     }
 
     @PatchMapping("/{member-id}")
-    public ResponseEntity patchMember(@PathVariable("member-id") long memberId,
-                                      @RequestBody MemberPatchDto memberPatchDto) {
+    public ResponseEntity patchMember(
+            @PathVariable("member-id") @Positive long memberId,
+            @RequestBody @Valid MemberDto.Patch requestBody) {
+        requestBody.setMemberId(memberId);
 
-        memberPatchDto.setMemberId(memberId);
-
-        Member response = memberService.updateMemberV2(mapper.memberPatchDtoToMember(memberPatchDto));
-        return new ResponseEntity<>(mapper.memberToMemberResponseDto(response), HttpStatus.OK);
+        Member member = memberService.updateMemberV2(mapper.memberPatchDtoToMember(requestBody));
+        return new ResponseEntity<>(new SingleResponseDto<>(mapper.memberToMemberResponseDto(member)), HttpStatus.OK);
     }
 
     @GetMapping("/{member-id}")
-    public ResponseEntity getMember(@PathVariable("member-id") long memberId) {
+    public ResponseEntity getMember(@PathVariable("member-id") @Positive long memberId) {
 
-        Member response = memberService.findMember(memberId);
+        Member member = memberService.findMember(memberId);
 
-        return new ResponseEntity<>(mapper.memberToMemberResponseDto(response) ,HttpStatus.OK);
+        return new ResponseEntity<>(new SingleResponseDto<>(mapper.memberToMemberResponseDto(member)) ,HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity getMembers() {
+    public ResponseEntity getMembers(@Positive @RequestParam int page,
+                                     @Positive @RequestParam int size) {
 
-        List<Member> members = memberService.findMembers();
+        //i 서비스에서 컨트롤러에게 줄때 -1을 해줘야함
+        Page<Member> pageMembers = memberService.findMembers(page -1, size);
+        List<Member> members = pageMembers.getContent();
 
-        List<MemberResponseDto> response =
-                members.stream()
-                        .map(member -> mapper.memberToMemberResponseDto(member))
-                        .collect(Collectors.toList());
-
-        return new ResponseEntity(response, HttpStatus.OK);
+        return new ResponseEntity<>(new MultiResponseDto<>(mapper.membersToMemberResponseDtos(members), pageMembers), HttpStatus.OK);
     }
 
     @DeleteMapping("/{member-id}")
-    public ResponseEntity deleteMember(@PathVariable("member-id") long memberId) {
+    public ResponseEntity deleteMember(@PathVariable("member-id") @Positive long memberId) {
 
         memberService.deleteMember(memberId);
 

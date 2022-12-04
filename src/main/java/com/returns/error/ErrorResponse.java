@@ -1,10 +1,8 @@
 package com.returns.error;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 
 import javax.validation.ConstraintViolation;
 import java.util.List;
@@ -12,9 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
-@AllArgsConstructor
 public class ErrorResponse {
-
     private int status;
     private String message;
     private List<FieldError> fieldErrors;
@@ -25,8 +21,8 @@ public class ErrorResponse {
         this.message = message;
     }
 
-    private ErrorResponse(List<FieldError> fieldErrors,
-                          List<ConstraintViolationError> violationErrors) {
+    private ErrorResponse(final List<FieldError> fieldErrors,
+                          final List<ConstraintViolationError> violationErrors) {
         this.fieldErrors = fieldErrors;
         this.violationErrors = violationErrors;
     }
@@ -40,12 +36,15 @@ public class ErrorResponse {
     }
 
     public static ErrorResponse of(ExceptionCode exceptionCode) {
-        return new ErrorResponse(exceptionCode.getStatus(),
-                exceptionCode.getMessage());
+        return new ErrorResponse(exceptionCode.getStatus(), exceptionCode.getMessage());
     }
 
     public static ErrorResponse of(HttpStatus httpStatus) {
         return new ErrorResponse(httpStatus.value(), httpStatus.getReasonPhrase());
+    }
+
+    public static ErrorResponse of(HttpStatus httpStatus, String message) {
+        return new ErrorResponse(httpStatus.value(), message);
     }
 
     @Getter
@@ -54,14 +53,13 @@ public class ErrorResponse {
         private Object rejectedValue;
         private String reason;
 
-        public FieldError(String field, Object rejectedValue, String reason) {
+        private FieldError(String field, Object rejectedValue, String reason) {
             this.field = field;
             this.rejectedValue = rejectedValue;
             this.reason = reason;
         }
 
-        private static List<FieldError> of(BindingResult bindingResult) {
-
+        public static List<FieldError> of(BindingResult bindingResult) {
             final List<org.springframework.validation.FieldError> fieldErrors = bindingResult.getFieldErrors();
 
             return fieldErrors.stream()
@@ -85,7 +83,7 @@ public class ErrorResponse {
             this.reason = reason;
         }
 
-        private static List<ConstraintViolationError> of(Set<ConstraintViolation<?>> constraintViolations) {
+        public static List<ConstraintViolationError> of(Set<ConstraintViolation<?>> constraintViolations) {
             return constraintViolations.stream()
                     .map(constraintViolation -> new ConstraintViolationError(
                             constraintViolation.getPropertyPath().toString(),
@@ -94,7 +92,4 @@ public class ErrorResponse {
                     .collect(Collectors.toList());
         }
     }
-
-
-
 }

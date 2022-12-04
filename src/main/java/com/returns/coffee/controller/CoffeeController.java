@@ -6,7 +6,10 @@ import com.returns.coffee.dto.CoffeeResponseDto;
 import com.returns.coffee.entity.Coffee;
 import com.returns.coffee.mapper.CoffeeMapper;
 import com.returns.coffee.service.CoffeeService;
+import com.returns.response.MultiResponseDto;
+import com.returns.response.SingleResponseDto;
 import org.apache.coyote.Response;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/v1/coffees")
+@RequestMapping("/v11/coffees")
 @Validated
 public class CoffeeController {
 
@@ -33,44 +36,53 @@ public class CoffeeController {
     @PostMapping
     public ResponseEntity postCoffee(@Valid @RequestBody CoffeePostDto coffeeDto) {
 
-        Coffee coffee = mapper.coffeePostDtoToCoffee(coffeeDto);
+        Coffee coffee = coffeeService.createCoffee(mapper.coffeePostDtoToCoffee(coffeeDto));
 
-        Coffee response = coffeeService.createCoffee(coffee);
-
-        return new ResponseEntity<>(mapper.coffeeToCoffeeResponseDto(response), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(mapper.coffeeToCoffeeResponseDto(coffee)),
+                HttpStatus.CREATED);
     }
 
     @PatchMapping("/{coffee-id}")
-    public ResponseEntity patchCoffee(@PathVariable("coffee-id") @Positive long coffeeId,
-                                       @Valid @RequestBody CoffeePatchDto coffeeDto) {
-        coffeeDto.setCoffeeId(coffeeId);
-        Coffee response = coffeeService.updateCoffee(mapper.coffeePatchDtoToCoffee(coffeeDto));
+    public ResponseEntity patchCoffee(@PathVariable("coffee-id")@Positive long coffeeId,
+                                      @Valid @RequestBody CoffeePatchDto coffeePatchDto) {
 
-        return new ResponseEntity<>(mapper.coffeeToCoffeeResponseDto(response), HttpStatus.OK);
+        coffeePatchDto.setCoffeeId(coffeeId);
+        Coffee coffee = coffeeService.updateCoffee(mapper.coffeePatchDtoToCoffee(coffeePatchDto));
+
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(mapper.coffeeToCoffeeResponseDto(coffee)),
+                        HttpStatus.OK);
     }
 
-    @GetMapping("/{coffee-id")
-    public ResponseEntity findCoffee(@PathVariable("coffee-id") long coffeeId) {
-        Coffee response = coffeeService.findCoffee(coffeeId);
+    @GetMapping("/{coffee-id}")
+    public ResponseEntity getCoffee(@PathVariable("coffee-id")@Positive long coffeeId) {
 
-        return new ResponseEntity<>(mapper.coffeeToCoffeeResponseDto(response), HttpStatus.OK);
+        Coffee coffee = coffeeService.findCoffee(coffeeId);
+
+        return new ResponseEntity<>(
+                new SingleResponseDto<>(mapper.coffeeToCoffeeResponseDto(coffee)),
+                HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity findCoffees() {
-        List<Coffee> coffees = coffeeService.findCoffees();
+    public ResponseEntity getCoffees(@Positive @RequestParam int page,
+                                     @Positive @RequestParam int size) {
 
-        List<CoffeeResponseDto> response =
-                coffees.stream()
-                        .map(coffee -> mapper.coffeeToCoffeeResponseDto(coffee))
-                        .collect(Collectors.toList());
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        Page<Coffee> pageCoffees = coffeeService.findCoffees(page-1, size);
+        List<Coffee> coffees = pageCoffees.getContent();
+
+        return new ResponseEntity<>(
+                new MultiResponseDto<>(mapper.coffeesToCoffeeResponseDtos(coffees), pageCoffees), HttpStatus.OK);
     }
 
     @DeleteMapping("/{coffee-id}")
     public ResponseEntity deleteCoffee(@PathVariable("coffee-id") long coffeeId) {
+
         coffeeService.deleteCoffee(coffeeId);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
+
 

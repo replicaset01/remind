@@ -1,6 +1,7 @@
 package com.returns.member.repository;
 
 import com.returns.member.entity.Member;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.Optional;
@@ -11,6 +12,6 @@ import java.util.Optional;
  * 페이지네이션 기능을 제공하는 PagingAndSortingRepository 을 이용하면 됩니다.
  */
 
-public interface MemberRepository extends PagingAndSortingRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByEmail(String email);
 }

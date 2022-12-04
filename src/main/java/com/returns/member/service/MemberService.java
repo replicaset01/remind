@@ -10,8 +10,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+/**
+ * - 메서드 구현
+ * - DI 적용
+ * - Spring Data JPA 적용
+ */
 
 @Service
 public class MemberService {
@@ -24,6 +31,7 @@ public class MemberService {
         this.beanUtils = beanUtils;
     }
 
+    //i createMember = 이메일 검증 후 DB저장
     public Member createMember(Member member) {
         verifyExistsEmail(member.getEmail());
         return memberRepository.save(member);
@@ -32,10 +40,17 @@ public class MemberService {
     public Member updateMemberV1(Member member) {
         Member findMember = findVerifiedMember(member.getMemberId());
 
+        //i 멤버의 name,phone,status,변경시간 수정
+
         Optional.ofNullable(member.getName())
                 .ifPresent(name -> findMember.setName(name));
         Optional.ofNullable(member.getPhone())
                 .ifPresent(phone -> findMember.setPhone(phone));
+        Optional.ofNullable(member.getMemberStatus())
+                .ifPresent(memberStatus -> findMember.setMemberStatus(memberStatus));
+
+        findMember.setModifiedAt(LocalDateTime.now());
+
         return memberRepository.save(findMember);
     }
 
