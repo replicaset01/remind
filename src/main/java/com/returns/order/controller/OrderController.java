@@ -16,9 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -28,6 +30,7 @@ public class OrderController {
     private final OrderService orderService;
     private final OrderMapper mapper;
     private final MemberService memberService;
+    private final static String ORDER_DEFAULT_URL = "/v11/orders";
 
     public OrderController(OrderService orderService,
                            OrderMapper mapper, MemberService memberService) {
@@ -44,6 +47,14 @@ public class OrderController {
         return new ResponseEntity<>(
                 new SingleResponseDto<>(mapper.orderToOrderResponseDto(order)),
                 HttpStatus.CREATED);
+//        URI location =
+//                UriComponentsBuilder
+//                        .newInstance()
+//                        .path(ORDER_DEFAULT_URL + "/{order-id}")
+//                        .buildAndExpand(order.getOrderId())
+//                        .toUri();               // "/v10/orders/{order-id}"
+//
+//        return ResponseEntity.created(location).build(); // (3) HTTP 201 Created status
     }
 
     private void updateStamp(Order order) {
