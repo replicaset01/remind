@@ -84,7 +84,7 @@ public class MemberService {
         Optional<Member> optionalMember =
                 memberRepository.findById(memberId);
         Member findMember =
-                optionalMember.orElseThrow(() ->
+                optionalMember.orElseThrow(() -> //i () -> = 옆에 있는 코드를 그냥 실행 한다는 뜻
                         new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
         return findMember;
     }

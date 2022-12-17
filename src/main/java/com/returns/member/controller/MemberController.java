@@ -44,6 +44,7 @@ public class MemberController {
 //    public ResponseEntity postMember(@Valid @RequestBody MemberPostDto memberDto) {
 //
 //        Member member = memberService.createMember(mapper.memberPostDtoToMember(memberDto));
+//        member.setStamp(new Stamp());
 //        URI location = UriCreator.createUri(MEMBER_DEFAULT_URL, member.getMemberId());
 //        return ResponseEntity.created(location).build();
 //    }
